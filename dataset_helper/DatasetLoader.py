@@ -100,7 +100,7 @@ class SiameseDataset(Dataset):
 
 
     def train_transform(self):
-        if self.transform == False:
+        if self.enable_transform == False:
             return v2.Compose([
                 v2.Resize(self.img_size),
                 v2.ToImage(),
