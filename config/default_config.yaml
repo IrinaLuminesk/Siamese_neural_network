@@ -1,0 +1,39 @@
+# GPUS: (0,1,2,3)
+# WORKERS: 4
+# PRINT_FREQ: 1
+
+DDP_TRAIN: FALSE
+
+DATASET:
+  TRAIN_FOLDER: "/content/dataset/train"
+  TRAIN_SAMPLE: 14000
+  VAL_FOLDER: "/content/dataset/val"
+  VAL_SAMPLE: 4000
+  TEST_FOLDER: "/content/dataset/test"
+  TEST_SAMPLE: 2000
+
+TRAIN:
+  DATA:
+    IMAGE_SIZE: [256, 256]
+    BATCH_SIZE: 64
+    SHUFFLE: True
+    MEAN: [0.45413914, 0.45413914, 0.45413914]
+    STD: [0.29716831, 0.29716831, 0.29716831]
+  TRAIN_PARA:
+    MODEL_TYPE: 1
+    EMBEDDING_DIM: 256
+    BEGIN_EPOCH: 0
+    END_EPOCH: 100
+    LAST_EPOCH: 0
+    OPTIMIZER: "AdamW"
+    RESUME: False
+    EARLY_STOPPING: TRUE
+    PATIENCE: 10
+  OPTIONAL:
+    SAVE_CHECKPOINT: TRUE
+    CHECKPOINT_PATH: "./resume_model/checkpoint.pth"
+    SAVE_BEST: TRUE
+    BEST_PATH: "./best_model/best_checkpoint.pth"
+    SAVE_METRICS: TRUE
+    METRICS_PATH: "./metrics/metrics.csv"
+  TRANSFORM: TRUE
