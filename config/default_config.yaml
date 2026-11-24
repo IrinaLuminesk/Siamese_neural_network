@@ -5,17 +5,17 @@
 DDP_TRAIN: FALSE
 
 DATASET:
-  TRAIN_FOLDER: "/content/dataset/train"
+  TRAIN_FOLDER: "/content/dataset2/train"
   TRAIN_SAMPLE: 14000
-  VAL_FOLDER: "/content/dataset/val"
+  VAL_FOLDER: "/content/dataset2/val"
   VAL_SAMPLE: 4000
-  TEST_FOLDER: "/content/dataset/test"
+  TEST_FOLDER: "/content/dataset2/test"
   TEST_SAMPLE: 2000
 
 TRAIN:
   DATA:
-    IMAGE_SIZE: [256, 256]
-    BATCH_SIZE: 64
+    IMAGE_SIZE: [224, 224]
+    BATCH_SIZE: 8
     SHUFFLE: True
     MEAN: [0.45413914, 0.45413914, 0.45413914]
     STD: [0.29716831, 0.29716831, 0.29716831]

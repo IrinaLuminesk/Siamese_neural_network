@@ -119,7 +119,7 @@ def main():
     embedding_dim = int(config["TRAIN"]["TRAIN_PARA"]["EMBEDDING_DIM"])
 
     #Learning_rate
-    Learning_rate_para = config["TRAIN"]["LEARNING_RATE"]["PieceWise"]
+    # Learning_rate_para = config["TRAIN"]["LEARNING_RATE"]["PieceWise"]
 
     #Optional
     save_checkpoint = config["TRAIN"]["OPTIONAL"]["SAVE_CHECKPOINT"]
@@ -156,11 +156,11 @@ def main():
         enable_transform=False)
     val_loader = val_data.dataset_loader("val")
 
-    model = Model(model_type=model_type, pair_type=1, embedding_dim=embedding_dim).to(device)
+    model = Model(model_type=1, pair_type=1, embedding_dim=embedding_dim).to(device)
 
     val_criterion = LossFunction(pair_type=1, margin=1)
     train_criterion = LossFunction(pair_type=1, margin=1)
-    optimizer = optim.AdamW(model.parameters(), lr=Learning_rate_para["MAX_LR"], weight_decay=1e-2)
+    optimizer = optim.AdamW(model.parameters(), lr=1e-3, weight_decay=1e-2)
 
 
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(

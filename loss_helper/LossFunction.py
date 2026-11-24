@@ -9,10 +9,10 @@ class LossFunction(nn.Module):
         self.pair_type = pair_type
         self.margin = margin
 
-    def forward(self, embs1, embs2, embs3=None, label=None):
+    def forward(self, embs1, embs2, embs3=None, labels=None):
         match self.pair_type:
             case 1:
-                return self.Contrastive_Loss(embs1=embs1, embs2=embs2, labels=label)
+                return self.Contrastive_Loss(embs1=embs1, embs2=embs2, labels=labels)
             case 2:
                 return self.Triplet_Loss(embs1=embs1, embs2=embs2, embs3=embs3)
             case _:
