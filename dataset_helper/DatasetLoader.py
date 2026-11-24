@@ -50,53 +50,58 @@ class SiameseDataset(Dataset):
 
     #Dùng để tạo ra các pair, có thể tùy chỉnh (chưa phải là pair chính thức dùng để train)
     def create_pairs(self):
-        if self.pair_type == 1: #Contrastive Loss
-            positive_sample = self.number_of_sample // 2
-            negative_sample = self.number_of_sample - positive_sample
-            positive_pairs, negative_pairs = [], []
+        match self.pair_type:
+            case 1: #Contrastive Loss
+                positive_sample = self.number_of_sample // 2
+                negative_sample = self.number_of_sample - positive_sample
+                positive_pairs, negative_pairs = [], []
 
-            keys = list(self.identities.keys())
-            # Generate positive pairs
-            for _ in range(positive_sample):
-                key = random.choice(keys)
-                image1, image2 = random.sample(self.identities[key], 2)
+                keys = list(self.identities.keys())
+                # Generate positive pairs
+                for _ in range(positive_sample):
+                    key = random.choice(keys)
+                    image1, image2 = random.sample(self.identities[key], 2)
 
-                positive_pairs.append((1, image1, image2))
+                    positive_pairs.append((0, image1, image2)) #0 là positive
 
-            # Generate negative pairs
-            for _ in range(negative_sample):
-                key1, key2 = random.sample(keys, 2)
+                # Generate negative pairs
+                for _ in range(negative_sample):
+                    key1, key2 = random.sample(keys, 2)
 
-                image1 = random.choice(self.identities[key1])
-                image2 = random.choice(self.identities[key2])
+                    image1 = random.choice(self.identities[key1])
+                    image2 = random.choice(self.identities[key2])
 
-                negative_pairs.append((0, image1, image2))
+                    negative_pairs.append((1, image1, image2)) #1 là negative
 
-            pairs = positive_pairs + negative_pairs
-            random.shuffle(pairs)
-            return pairs
-        else: #Triplet Loss
-            triplets = set()
-            keys = list(self.identities.keys())
+                pairs = positive_pairs + negative_pairs
+                random.shuffle(pairs)
+                return pairs
+            case 2: #Triplet Loss
+                triplets = set()
+                keys = list(self.identities.keys())
 
-            while len(triplets) < self.number_of_sample:
+                while len(triplets) < self.number_of_sample:
 
-                anchor_key = random.choice(keys)
+                    anchor_key = random.choice(keys)
 
-                anchor, positive = random.sample(
-                    self.identities[anchor_key], 2
+                    anchor, positive = random.sample(
+                        self.identities[anchor_key], 2
+                    )
+
+                    negative_key = random.choice(
+                        [k for k in keys if k != anchor_key]
+                    )
+
+                    negative = random.choice(
+                        self.identities[negative_key]
+                    )
+
+                    triplets.add((anchor, positive, negative))
+                return list(triplets)
+            case _:
+                raise ValueError(
+                    f"Invalid pair_type: {self.pair_type}. Expected 1 or 2."
                 )
-
-                negative_key = random.choice(
-                    [k for k in keys if k != anchor_key]
-                )
-
-                negative = random.choice(
-                    self.identities[negative_key]
-                )
-
-                triplets.add((anchor, positive, negative))
-            return list(triplets)
 
 
     def train_transform(self):
@@ -236,5 +241,5 @@ class DatasetLoader():
             )
         print()
         return loader
-    def regenerate_pair(self):
+    def regenerate_pairs(self):
         self.training_dataset.regenerate_pairs()
