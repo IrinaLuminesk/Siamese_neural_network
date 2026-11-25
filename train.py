@@ -191,7 +191,6 @@ def main():
         train_loss = train_metrics.avg_loss
         scheduler.step()
         print()
-        train_data.regenerate_pairs() #Tạo mới pairs
         
         val_metrics = validate(epoch, 
                                end_epoch, 
@@ -200,7 +199,7 @@ def main():
                                loader=val_loader, 
                                criterion=val_criterion, 
                                device=device)
-        val_EER, val_EER_threshold = train_metrics.get_threshold()
+        val_EER, val_EER_threshold = val_metrics.get_threshold()
         val_loss = val_metrics.avg_loss
         print()
 
