@@ -23,6 +23,9 @@ class MetricCal():
 
         self.eer = None
         self.eer_threshold = None
+        
+        self.loss = torch.zeros(1, device=self.device)
+        self.total_batch_size = torch.zeros(1, device=self.device)
     def get_threshold(self):
         dissimilarity = 1 - np.array(self.y_similarity)
 
@@ -49,7 +52,10 @@ class MetricCal():
 
         return self.eer, self.eer_threshold
     @torch.no_grad()
-    def update_train(self, loss, embs1, embs2, embs3=None, labels=None):
+    def update(self, loss, embs1, embs2, embs3=None, labels=None):
+        batch_size = embs1.size(0)
+        self.loss += loss.detach() * batch_size
+        self.total_batch_size += batch_size
         match self.pair_type:
             case 1: #Constraive Loss
                 similarity = F.cosine_similarity(
@@ -64,6 +70,11 @@ class MetricCal():
                 raise ValueError(
                     f"Invalid pair_type: {self.pair_type}. Expected 1 or 2."
                 )
+    @property
+    def avg_loss(self):
+        """Average loss over all accumulated batches."""
+        return (self.loss / self.total_batch_size).item() if self.total_batch_size > 0 else 0.0
+    
     @property
     def ROC_AUC(self):
         """

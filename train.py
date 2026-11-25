@@ -49,8 +49,8 @@ def train(epoch: int, end_epoch: int, model, pair_type, loader, criterion, optim
                 imgs1, imgs2 = imgs1.to(device, non_blocking=True), imgs2.to(device, non_blocking=True)
                 labels = labels.to(device, non_blocking=True)
                 embs1, embs2 = model(x1=imgs1, x2=imgs2)
-                loss = criterion(embs1=embs1, embs2=embs2, lables=labels)
-                metrics.update_train(loss=0, embs1=embs1, embs2=embs2, labels=labels)
+                loss = criterion(embs1=embs1, embs2=embs2, labels=labels)
+                metrics.update(loss=loss, embs1=embs1, embs2=embs2, labels=labels)
             case 2:
                 anchor_imgs, positive_imgs, negative_imgs = batch
                 anchor_imgs = anchor_imgs.to(device, non_blocking=True)
@@ -67,7 +67,7 @@ def train(epoch: int, end_epoch: int, model, pair_type, loader, criterion, optim
 
 def validate(epoch, end_epoch, model, pair_type, loader, criterion, device):
     model.eval()
-    # metrics = MetricCalV2(device=device)
+    metrics = MetricCal(device=device, pair_type=pair_type)
     with torch.no_grad():
         for batch in tqdm(loader, total=len(loader), desc="Validating epoch [{0}/{1}]".
                                 format(epoch, end_epoch)):
@@ -77,7 +77,8 @@ def validate(epoch, end_epoch, model, pair_type, loader, criterion, device):
                     imgs1, imgs2 = imgs1.to(device, non_blocking=True), imgs2.to(device, non_blocking=True)
                     labels = labels.to(device, non_blocking=True)
                     embs1, embs2 = model(x1=imgs1, x2=imgs2)
-                    loss = criterion(embs1=embs1, embs2=embs2, lables=labels)
+                    loss = criterion(embs1=embs1, embs2=embs2, labels=labels)
+                    metrics.update(loss=loss, embs1=embs1, embs2=embs2, labels=labels)
                 case 2:
                     anchor_imgs, positive_imgs, negative_imgs = batch
                     anchor_imgs = anchor_imgs.to(device, non_blocking=True)
@@ -87,9 +88,7 @@ def validate(epoch, end_epoch, model, pair_type, loader, criterion, device):
                 case _:
                     raise ValueError(
                     f"Invalid pair_type: {pair_type}. Expected 1 or 2.")
-    #         metrics.update_test(loss=loss, outputs1=outputs1, outputs2=outputs2, targets=targets)
-    # metrics.compute_fpr_tpr_thresholds()
-    return 0
+    return metrics
 
 def main():
     config = parse_args()
@@ -188,9 +187,8 @@ def main():
                                 optimizer=optimizer, 
                                 device=device)
         train_data.regenerate_pairs()
-        EER, EER_threshold = train_metrics.get_threshold()
-        print("EER: {0}, EER_threshold: {1}".format(EER, EER_threshold))
-        train_loss = 0
+        train_EER, train_EER_threshold = train_metrics.get_threshold()
+        train_loss = train_metrics.avg_loss
         scheduler.step()
         print()
         train_data.regenerate_pairs() #Tạo mới pairs
@@ -202,6 +200,8 @@ def main():
                                loader=val_loader, 
                                criterion=val_criterion, 
                                device=device)
+        val_EER, val_EER_threshold = train_metrics.get_threshold()
+        val_loss = val_metrics.avg_loss
         print()
 
         if save_checkpoint == True:
@@ -212,35 +212,42 @@ def main():
                             last_epoch=epoch, 
                             path=checkpoint_path)
 
-        # print("Epoch [{0}/{1}]: Training loss: {2}, ROC AUC: {3}, EER: {4}, TAR @ FAR=1%: {5}".
-        #     format(epoch, end_epoch, train_loss, train_ROC_AUC, train_EER, train_TAR_and_FAR_1p))
-        # print("Epoch [{0}/{1}]: Validation loss: {2}, ROC AUC: {3}, EER: {4}, TAR @ FAR=1%: {5}".
-        #     format(epoch, end_epoch, val_loss, val_ROC_AUC, val_EER, val_TAR_and_FAR_1p))
-        # if val_EER < best_eer:
-        #     if save_best == True:
-        #         print("Validation EER improve from {0} to {1} at epoch {2}. Saving best result".
-        #             format(round(best_eer, 4), round(val_EER, 4),  epoch))
-        #         Saving_Best(model, best_path)
-        #     else:
-        #         print("Validation accuracy improve from {0} to {1} at epoch {2}".
-        #             format(round(best_eer, 4), round(val_EER, 4),  epoch))
-        #     best_eer = val_EER
-        #     epochs_no_improve = 0  # reset patience
-        # else:
-        #     epochs_no_improve += 1
-        # if save_metrics:
-        #     Saving_Metric2(epoch=epoch, 
-        #                    train_loss=train_loss,
-        #                    train_ROC_AUC=train_ROC_AUC,
-        #                    train_EER=train_EER,
-        #                    train_TAR_and_FAR_1p=train_TAR_and_FAR_1p,
-        #                    train_TAR_and_FAR_01p=train_TAR_and_FAR_01p, 
-        #                    val_loss=val_loss,
-        #                    val_ROC_AUC=val_ROC_AUC,
-        #                    val_EER=val_EER,
-        #                    val_TAR_and_FAR_1p=val_TAR_and_FAR_1p,
-        #                    val_TAR_and_FAR_01p=val_TAR_and_FAR_01p, 
-        #                    path=metrics_path)
+        print("Epoch [{0}/{1}]: Training loss: {2}, EER: {3}".
+            format(epoch, end_epoch, train_loss, train_EER))
+        print("Epoch [{0}/{1}]: Validation loss: {2}, EER: {3}".
+            format(epoch, end_epoch, val_loss, val_EER))
+        if val_EER < best_eer:
+            if save_best == True:
+                print("Validation EER improve from {0} to {1} at epoch {2}. Saving best result".
+                    format(round(best_eer, 4), round(val_EER, 4),  epoch))
+                Saving_Best(model, best_path)
+            else:
+                print("Validation accuracy improve from {0} to {1} at epoch {2}".
+                    format(round(best_eer, 4), round(val_EER, 4),  epoch))
+            best_eer = val_EER
+            epochs_no_improve = 0  # reset patience
+        else:
+            epochs_no_improve += 1
+        if save_metrics:
+            Saving_Metric2(epoch=epoch, 
+                           train_loss=train_loss,
+                           train_EER=train_EER,
+                           train_EER_threshold=train_EER_threshold,
+                           train_ROC_AUC=train_metrics.ROC_AUC,
+                           train_acc=train_metrics.Accuracy_score,
+                           train_prec=train_metrics.Precision_score,
+                           train_rec=train_metrics.Recall_score,
+                           train_f1=train_metrics.F1_score,
+                           val_loss=val_loss,
+                           val_EER=val_EER,
+                           val_EER_threshold=val_EER_threshold,
+                           val_ROC_AUC=val_metrics.ROC_AUC,
+                           val_acc=val_metrics.Accuracy_score,
+                           val_prec=val_metrics.Precision_score,
+                           val_rec=val_metrics.Recall_score,
+                           val_f1=val_metrics.F1_score,
+                           path=metrics_path
+                        )
         if epochs_no_improve >= patience and early_stopping == True:
             print("Early stopping triggered at epoch {0}".format(epoch))
             break

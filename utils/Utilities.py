@@ -54,16 +54,23 @@ def Saving_Metric(epoch, train_acc, train_loss, top1_val_acc, top5_val_acc, val_
     metrics_df.to_csv(path, index=False)
 
 def Saving_Metric2(epoch, 
-                   train_ROC_AUC,
+                   train_loss,
                    train_EER,
-                   train_TAR_and_FAR_1p,
-                   train_TAR_and_FAR_01p, 
-                   train_loss, 
-                   val_ROC_AUC,
+                   train_EER_threshold,
+                   train_ROC_AUC,
+                   train_acc,
+                   train_prec,
+                   train_rec,
+                   train_f1,
+                   val_loss,
                    val_EER,
-                   val_TAR_and_FAR_1p,
-                   val_TAR_and_FAR_01p, 
-                   val_loss, path):
+                   val_EER_threshold,
+                   val_ROC_AUC,
+                   val_acc,
+                   val_prec,
+                   val_rec,
+                   val_f1,
+                   path):
     Create_Folder(path=path)
     if os.path.exists(path):
         metrics_df = pd.read_csv(path)
@@ -71,29 +78,40 @@ def Saving_Metric2(epoch,
         metrics_df = pd.DataFrame({
             'epoch': pd.Series(dtype='int'),
             'train_loss': pd.Series(dtype='float'),
-            'train_ROC_AUC': pd.Series(dtype='float'),
             'train_EER': pd.Series(dtype='float'),
-            'train_TAR_and_FAR_1p': pd.Series(dtype='float'),
-            'train_TAR_and_FAR_01p': pd.Series(dtype='float'),
+            'train_EER_threshold': pd.Series(dtype='float'),
+            'train_ROC_AUC': pd.Series(dtype='float'),
+            'train_acc': pd.Series(dtype='float'),
+            'train_prec': pd.Series(dtype='float'),
+            'train_rec': pd.Series(dtype='float'),
+            'train_f1': pd.Series(dtype='float'),
             'val_loss': pd.Series(dtype='float'),
-            'val_ROC_AUC': pd.Series(dtype='float'),
             'val_EER': pd.Series(dtype='float'),
-            'val_TAR_and_FAR_1p': pd.Series(dtype='float'),
-            'val_TAR_and_FAR_01p': pd.Series(dtype='float'),
-            'lr': pd.Series(dtype='float')
+            'val_EER_threshold': pd.Series(dtype='float'),
+            'val_ROC_AUC': pd.Series(dtype='float'),
+            'val_acc': pd.Series(dtype='float'),
+            'val_prec': pd.Series(dtype='float'),
+            'val_rec': pd.Series(dtype='float'),
+            'val_f1': pd.Series(dtype='float')
         })
     new_row = {
         'epoch': epoch,
         'train_loss': train_loss,
-        'train_ROC_AUC': train_ROC_AUC,
         'train_EER': train_EER,
-        'train_TAR_and_FAR_1p': train_TAR_and_FAR_1p,
-        'train_TAR_and_FAR_01p': train_TAR_and_FAR_01p,
+        'train_EER_threshold': train_EER_threshold,
+        'train_ROC_AUC': train_ROC_AUC,
+        'train_acc': train_acc,
+        'train_prec': train_prec,
+        'train_rec': train_rec,
+        'train_f1': train_f1,
         'val_loss': val_loss,
-        'val_ROC_AUC': val_ROC_AUC,
         'val_EER': val_EER,
-        'val_TAR_and_FAR_1p': val_TAR_and_FAR_1p,
-        'val_TAR_and_FAR_01p': val_TAR_and_FAR_01p,
+        'val_EER_threshold': val_EER_threshold,
+        'val_ROC_AUC': val_ROC_AUC,
+        'val_acc': val_acc,
+        'val_prec': val_prec,
+        'val_rec': val_rec,
+        'val_f1': val_f1
     }
     metrics_df = pd.concat([metrics_df, pd.DataFrame([new_row])], ignore_index=True)
     metrics_df.to_csv(path, index=False)
